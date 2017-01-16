@@ -53,12 +53,17 @@ packages:
     git: https://github.com/teaspot-studio/gore-and-ash-logging.git
     commit: 77471b5c6413fb242f657c49efcbd1ef29204c26
   extra-dep: true
+- location:
+    git: https://github.com/teaspot-studio/gore-and-ash-sdl.git
+    commit: 46a019a1d586c385008abfa77ae32a7b52b12a11
+  extra-dep: true
 
 # Dependency packages to be pulled from upstream that are not in the resolver
 # (e.g., acme-missiles-0.3)
 extra-deps:
 - gore-and-ash-2.0.0.0
 - gore-and-ash-logging-3.0.0.0
+- gore-and-ash-sdl-3.0.0.0
 - prim-uniq-0.1.0.1
 - ref-tf-0.4.0.1
 - sdl2-ttf-1.0.0

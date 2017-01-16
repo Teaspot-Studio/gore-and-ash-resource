@@ -8,9 +8,6 @@ import Game.GoreAndAsh.Core
 import Game.GoreAndAsh.Logging
 import Game.GoreAndAsh.SDL
 import SDL (get)
-import SDL.TTF.FFI (TTFFont)
-
-
 
 type AppStack t = SDLT t (LoggingT t (GameMonad t))
 
