@@ -61,6 +61,7 @@ extra-deps:
 - gore-and-ash-logging-3.0.0.0
 - prim-uniq-0.1.0.1
 - ref-tf-0.4.0.1
+- sdl2-ttf-1.0.0
 
 # Override default flag values for local packages and extra-deps
 flags: {}
