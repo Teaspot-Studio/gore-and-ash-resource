@@ -1,3 +1,29 @@
+{-|
+Module      : Game.GoreAndAsh.Resource.Module
+Description : Internal implementation of public API of resource game module
+Copyright   : (c) Anton Gushcha, 2016-2017
+                  Anatoly Nardid, 2016-2017
+License     : BSD3
+Maintainer  : ncrashed@gmail.com
+Stability   : experimental
+Portability : POSIX
+
+The module defines implementation of resource game module. You are
+interested only in a 'ResourceT' and 'ResourceOptions' types as 'ResourceT'
+should be placed in your monad stack to enable 'MonadResource' API in your
+application.
+
+@
+type AppStack t = ResourceT t (LoggingT t (TimerT t (GameMonad t)))
+
+newtype AppMonad t a = AppMonad { runAppMonad :: AppStack t a}
+  deriving (Functor, Applicative, Monad, MonadFix)
+@
+
+And you will need some boilerplate code for instance deriving, see
+`examples/Example01.hs` for full example.
+
+-}
 module Game.GoreAndAsh.Resource.Module(
     ResourceOptions(..)
   , ResourceT(..)
@@ -19,19 +45,29 @@ import Game.GoreAndAsh.Resource.API
 import qualified Data.ByteString.Lazy as BS
 import qualified Data.Dynamic as D
 
+-- | Options that are passed to 'runModule' at application startup.
+--
+-- [@s@] The nested options of next module in stack. Options are layered the
+-- similar way as parts of monad transformers.
 data ResourceOptions s = ResourceOptions {
-  resourceOptsPrefix :: FilePath
-, resourceOptsNext   :: s
+  resourceOptsPrefix :: FilePath -- ^ Folder where to search local resources. TODO: move this to resource pack
+, resourceOptsNext   :: s -- ^ Nested options of next game module
 }
 
+-- | Callback that fires an event about finish of loading of resource
 type ResourceLoadedTrigger = Either Text D.Dynamic -> IO Bool
 
+-- | Internal environment of game module
 data ResourceEnv t = ResourceEnv {
+  -- | Options that were used to create the module
   resourceEnvOptions    :: ResourceOptions ()
+  -- | Reading end of event that is exposed to FRP network
 , resourceEnvLoaded     :: Event t (Either Text D.Dynamic)
+  -- | Writing end of event that is kept internal
 , resourceEnvFireLoaded :: ResourceLoadedTrigger
 }
 
+-- | Create a new environment for game module
 newResourceEnv :: MonadAppHost t m => ResourceOptions s -> m (ResourceEnv t)
 newResourceEnv opts = do
   (loadedE, loadedTrigger) <- newExternalEvent
@@ -41,6 +77,27 @@ newResourceEnv opts = do
     , resourceEnvFireLoaded = loadedTrigger
     }
 
+-- | Implementation of 'MonadResource' API.
+--
+-- [@t@] FRP engine, you could ignore this parameter as it resolved only at main
+-- function of your application.
+--
+-- [@m@] Underlying game modules, next layer in monad stack.
+--
+-- [@a@] Result of computation.
+--
+-- How to embed the monad into your app:
+--
+-- @
+-- type AppStack t = ResourceT t (LoggingT t (TimerT t (GameMonad t)))
+--
+-- newtype AppMonad t a = AppMonad { runAppMonad :: AppStack t a}
+--   deriving (Functor, Applicative, Monad, MonadFix)
+-- @
+--
+-- And you will need some boilerplate code for instance deriving, see
+-- `examples/Example01.hs` for full example.
+--
 newtype ResourceT t m a = ResourceT { runResourceT :: ReaderT (ResourceEnv t) m a }
   deriving (Functor, Applicative, Monad, MonadReader (ResourceEnv t), MonadFix
     , MonadIO, MonadThrow, MonadCatch, MonadMask, MonadSample t, MonadHold t)
