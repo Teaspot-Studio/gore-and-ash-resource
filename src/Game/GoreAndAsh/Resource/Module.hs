@@ -103,15 +103,13 @@ newtype ResourceT t m a = ResourceT { runResourceT :: ReaderT (ResourceEnv t) m 
     , MonadIO, MonadThrow, MonadCatch, MonadMask, MonadSample t, MonadHold t)
 
 instance {-# OVERLAPPING #-} MonadAppHost t m => MonadResource t (ResourceT t m) where
-  loadResource :: forall a . Resource a => Event t FilePath -> ResourceT t m (Event t (Either Text a))
-  loadResource nameE = do
+  loadResource :: forall a . Resource a => Event t (ResourceArg a, FilePath) -> ResourceT t m (Event t (Either Text a))
+  loadResource optsE = do
     ResourceEnv {..} <- ask
     let ResourceOptions {..} = resourceEnvOptions
-    performEvent_ $ ffor nameE $ \name -> do
+    performEvent_ $ ffor optsE $ \(arg, name) -> do
       bs <- liftIO $ BS.readFile $ resourceOptsPrefix <> "/" <> name
-      let
-        ma :: Either Text a
-        ma = readResource name bs
+      ma :: Either Text a <- liftIO $ readResource arg name bs
       _ <- liftIO $ resourceEnvFireLoaded $ fmap D.toDyn ma
       return ()
     return $ fforMaybe resourceEnvLoaded $ sequence . fmap D.fromDynamic

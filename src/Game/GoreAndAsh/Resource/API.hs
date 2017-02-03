@@ -25,9 +25,11 @@ import Game.GoreAndAsh
 
 -- | Describes a resource that can be loaded from raw bytes.
 class Typeable a => Resource a where
-  readResource :: FilePath -- ^ Path to resource inside a resource pack
+  type ResourceArg a :: *
+  readResource :: ResourceArg a -- ^ Specific argument for a
+    -> FilePath -- ^ Path to resource inside a resource pack
     -> ByteString -- ^ Raw bytes of the resource
-    -> Either Text a -- ^ Either error or loaded resource
+    -> IO (Either Text a) -- ^ Either error or loaded resource
 
 -- | Public API of resouce module.
 --
@@ -37,7 +39,7 @@ class Typeable a => Resource a where
 -- foo :: (MonadResource t m, LoggingMonad t m) => m ()
 -- @
 class MonadAppHost t m => MonadResource t m | m -> t where
-  loadResource :: Resource a => Event t FilePath -> m (Event t (Either Text a))
+  loadResource :: Resource a => Event t (ResourceArg a, FilePath) -> m (Event t (Either Text a))
 
 instance {-# OVERLAPPABLE #-} (MonadTrans mt, MonadAppHost t (mt m), MonadResource t m)
   => MonadResource t (mt m) where

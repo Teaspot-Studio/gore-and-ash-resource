@@ -24,13 +24,14 @@ instance Show ASCIITexture where
   show (ASCIITexture t) = "\n" ++ unpack t
 
 instance Resource ASCIITexture where
-  readResource _ = Right . ASCIITexture . decodeUtf8 . BS.toStrict
+  type ResourceArg ASCIITexture = ()
+  readResource _ _ = return . Right . ASCIITexture . decodeUtf8 . BS.toStrict
 
 app :: forall t m . (TimerMonad t m, MonadResource t m, LoggingMonad t m) => m ()
 app = do
   tickE <- tickEveryN (realToFrac (1 :: Double)) 3 never
   --logInfoE $ ffor tickE $ const "TIIIICK!"
-  loadedE <- loadResource $ ffor tickE $ const "texture.txt"
+  loadedE <- loadResource $ const ((),"texture.txt") <$> tickE
   let
     errE :: Event t Text
     errE = fforMaybe loadedE $ \e -> case e of

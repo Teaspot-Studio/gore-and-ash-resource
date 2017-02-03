@@ -72,7 +72,7 @@ drawFrame win r = do
 app :: forall t m . MonadSDL t m => m ()
 app = do
   _ <- createMainWindow never drawFrame defaultWindowCfg
-  return ()
+  return () 
 
 
 main :: IO ()
